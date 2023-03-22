@@ -1,22 +1,23 @@
 
 //#region Fetch data
 
-const apiURL = "https://192.168.1.147:5000";
+const apiURL = "http://localhost:5000";
+let refreshOption = "toppoints/15";
 
-const getScore = (option = "points") => {
+const getScore = async (option = null) => {
     try {
-        fetch(`${apiURL}/${option}`, {
-            method: "GET"
-        })
-        .then((response) => {
-            response;
-            if (response) {
-                RenderData(response);
-            }
-        })
-        .catch((error) => {
-            console.error("fetch failed");
+        if (option == null) {
+            option = refreshOption;
+        }
+        refreshOption = option;
+        const myRequest = new Request(`${apiURL}/${option}`);
+        
+        const response = await fetch(myRequest, {
+            method: "GET",
         });
+        const data = await response.json();
+        console.log(data);
+        RenderData(data);
     }
     catch {
         console.error("Failed to fetch");
@@ -27,12 +28,6 @@ const getScore = (option = "points") => {
 
 //#region Render Data
 
-const dummyData = {"score": [
-    {"total": 2, "name": "Kelvin", "grams": 2, "points": 2},
-    {"total": 2, "name": "Marcus", "grams": 2, "points": 2},
-    {"total": 2, "name": "Tobias", "grams": 2, "points": 2},
-]};
-
 const RenderData = (data) => {
     const tableBodyElement = document.getElementById('tablebody');
     tableBodyElement.innerHTML = "";
@@ -40,8 +35,8 @@ const RenderData = (data) => {
     data.forEach(dataElement => {
         let newRow = tableRowTemplate;
         newRow = newRow.replace("%NAME%", dataElement.name)
-            .replace("%TOTAL%", dataElement.total)
-            .replace("%GRAMS%", dataElement.grams)
+            .replace("%TOTAL%", dataElement.mostFish)
+            .replace("%GRAMS%", dataElement.highestWeight)
             .replace("%POINTS%", dataElement.points);
 
         tableBodyElement.innerHTML += newRow;
@@ -70,7 +65,10 @@ let currentHeadElement = document.getElementById("header_points");
 currentHeadElement.classList.add("star");
 
 window.onload = (event) => {
-    RenderData(dummyData.score);
+    getScore();
+    setInterval(() => {
+        getScore();
+    }, 10000);
 };
 
 const onClickHeaderLeader = (id, board) => {
